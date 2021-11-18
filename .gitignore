@@ -1,2 +1,13 @@
 dune-project
 .merlin
+*.cmi
+*.cmo
+*.cmx
+*.out
+_build
+_build/
+
+# VSCODE
+.vscode
+.vscode/
+

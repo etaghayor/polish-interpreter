@@ -7,9 +7,11 @@ open Reader
     polish.ml. Il est recommandé d'architecturer ultérieurement votre
     projet en plusieurs fichiers source de tailles raisonnables *)
 
-let print_polish (p:program) : unit = failwith "TODO"
+(* let print_polish (p:program) : unit = failwith "TODO" *)
+let print_polish p : unit = failwith "TODO"
 
-let eval_polish (p:program) : unit = failwith "TODO"
+let eval_polish p : unit = failwith "TODO"
+(* let eval_polish (p:program) : unit = failwith "TODO" *)
 
 let usage () =
   print_string "Polish : analyse statique d'un mini-langage\n";

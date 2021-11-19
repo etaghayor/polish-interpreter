@@ -17,8 +17,8 @@ let usage () =
 
 let main () =
   match Sys.argv with
-  | [|_;"--reprint";file|] -> print_polish (read_polish file)
-  | [|_;"--eval";file|] -> eval_polish (read_polish file)
+  | [|_;"-reprint";file|] -> print_polish (read_polish file)
+  | [|_;"-eval";file|] -> eval_polish (read_polish file)
   | _ -> usage ()
 
 (* lancement de ce main *)

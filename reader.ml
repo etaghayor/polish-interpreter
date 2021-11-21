@@ -2,6 +2,8 @@ open Ast
 open String
 open Str
 
+let perror_and_exit msg pos =
+  failwith (msg ^ ". line: " ^ string_of_int pos)
 
 let contains_sub s1 s2 =
   let re = Str.regexp_string s2
@@ -9,8 +11,9 @@ let contains_sub s1 s2 =
   try ignore (Str.search_forward re s1 0); true
   with Not_found -> false
 
-let read_var_name name = 
-  if List.length name = 1 then List.hd name else failwith "syntax error: not a valid name"
+let read_var_name name pos = 
+  if List.length name = 1 then List.hd name else
+    perror_and_exit "syntax error: not a valid name" pos
 
 
 let check_indent depth pos line =
@@ -21,56 +24,59 @@ let check_indent depth pos line =
   in aux depth line
 
 
-let read_op op =
+let read_op op pos =
   match op with 
   | "+" -> Add
   | "-" -> Sub
   | "*" -> Mul
   | "/" -> Div
   | "%" -> Mod
-  | _ -> failwith "Not_op"
+  | _ -> perror_and_exit "syntax error: not an operator" pos
 
 
-let read_expr expr =
+let read_expr expr pos =
   let splitted = split_on_char ' ' expr in
   let rec aux = function
-    | [] -> failwith "not a valid excpression"
-    | x::y -> match read_op x with
+    | [] -> perror_and_exit "not a valid expression" pos
+    | x::y -> match read_op x pos with
       | exception _ -> (match x with
-          | n -> Num (int_of_string n)
-          | exception _ -> Var x)
-      | _ -> Op (read_op x,aux y,aux y)
-  in aux splitted
+          | n -> Num (int_of_string n),y
+          | exception _ -> Var x,y)
+      | _ -> (let ex1,rest1 = aux y in 
+              let ex2,rest2 = aux rest1 in
+              Op (read_op x pos,ex1,ex2),rest2)
+  in let res,rest = aux splitted in
+  if rest <> [] then perror_and_exit "too many arguments for operator" pos else res
 
-let read_comp = function
+let read_comp pos = function
   | " = " -> Eq
   | " <> " -> Ne
   | " < " -> Lt
   | " <= " -> Le
   | " > " -> Gt
   | " >= " -> Ge
-  | _ -> failwith "NOT A VALID OPERATOR"
+  | _ -> perror_and_exit "syntax error: not a comparison function" pos
 
-let aux_read_cond e d = 
+let aux_read_cond pos e d = 
   let elist = split (regexp_string d) e in
-  read_expr (List.hd elist), d, read_expr (List.nth elist 1)
+  read_expr (List.hd elist) pos, d, read_expr (List.nth elist 1) pos
 
-let read_cond e = 
-  let e1,c,e2 = aux_read_cond e
+let read_cond e pos = 
+  let e1,c,e2 = aux_read_cond pos e
       (if contains_sub e " = " then " = "  else 
        if contains_sub e " <> " then " <> " else
        if contains_sub e " < " then " < " else
        if contains_sub e " <= " then " <= " else
        if contains_sub e " > " then " > " else
        if contains_sub e " => " then " => " else
-         failwith "NOT A VALID CONDITION" )
-  in (e1,read_comp c, e2) 
+         perror_and_exit "not a valid condition" pos)
+  in (e1,read_comp pos c, e2) 
 
 let read_instr lb pos line =
   let depth,pos,line = check_indent lb pos line in
-  if depth > lb then failwith ("indentation bug: line " ^ (string_of_int pos)) else
+  if depth > lb then perror_and_exit "indentation bug" pos else
     match List.hd line with
-    | "READ" -> let name = List.tl line in (depth,Read (read_var_name name))
+    | "READ" -> let name = List.tl line in (depth,Read (read_var_name name pos))
     | "PRINT" -> failwith "TODO"
     | "IF" -> failwith "TODO"
     | "WHILE" -> failwith "TODO"

@@ -1,6 +1,6 @@
 open Ast
 open Reader
-
+  
 (** Projet Polish -- Analyse statique d'un mini-langage impératif *)
 
 (** Note : cet embryon de projet est pour l'instant en un seul fichier

@@ -5,7 +5,7 @@ open Str
 
 (* auxilary functions *)
 let perror_and_exit msg pos =
-  failwith (msg ^ ". line: " ^ string_of_int pos)
+  failwith (msg ^ ". Read, line: " ^ string_of_int pos)
 
 let contains_sub s1 s2 =
   let re = Str.regexp_string s2

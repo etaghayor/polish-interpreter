@@ -12,7 +12,7 @@ let print_op pos op =
   | Mul -> "* "
   | Div -> "/ "
   | Mod -> "// "
-  | _ -> perror_and_exit "syntax error: not an operator" pos
+  (* | _ -> perror_and_exit "syntax error: not an operator" pos *)
 ;;
 
 let rec print_expr pos expr =
@@ -20,7 +20,7 @@ let rec print_expr pos expr =
   |Num n-> string_of_int n
   |Var x-> x
   |Op(op, ex1, ex2)-> (print_op pos op) ^ "(" ^ (print_expr pos ex1) ^ ")" ^ " (" ^ (print_expr pos ex2) ^ ")"
-  | _ -> perror_and_exit "syntax error: not an expression" pos
+  (* | _ -> perror_and_exit "syntax error: not an expression" pos *)
 ;;
 
 let print_comp pos = function
@@ -30,7 +30,7 @@ let print_comp pos = function
   | Le -> " <= "
   | Gt -> " > "
   | Ge -> " >= "
-  | _ -> perror_and_exit "syntax error: not a comparator" pos
+  (* | _ -> perror_and_exit "syntax error: not a comparator" pos *)
 ;;
 
 let print_cond pos cond = 

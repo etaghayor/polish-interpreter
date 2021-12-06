@@ -8,9 +8,9 @@ open Reader
     projet en plusieurs fichiers source de tailles raisonnables *)
 
 (* let print_polish (p:program) : unit = failwith "TODO" *)
-let print_polish p : unit = failwith "TODO"
+let print_polish p : unit = failwith "print TODO"
 
-let eval_polish p : unit = failwith "TODO"
+let eval_polish p : unit = failwith "eval TODO"
 (* let eval_polish (p:program) : unit = failwith "TODO" *)
 
 let usage () =

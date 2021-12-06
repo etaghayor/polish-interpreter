@@ -5,7 +5,7 @@ open Str
 
 (* auxilary functions *)
 let perror_and_exit msg pos =
-  failwith (msg ^ ". Read, line: " ^ string_of_int pos)
+  failwith (msg ^ ". line: " ^ string_of_int pos)
 
 let contains_sub s1 s2 =
   let re = Str.regexp_string s2
@@ -25,15 +25,15 @@ let read_string words_list =
     | [] -> res
     | [x] -> res ^ x
     | x::xs -> aux (res^x^" ") xs
-  in aux "" (List.tl words_list)
+  in aux "" words_list
 
 
 let check_indent pos depth line =
-  let rec aux res = function
-    | [] -> res
-    | x::xs -> if x <> "" then res else aux (res+1) xs in 
-  let indent = aux 0 line in
-  if indent <= depth then indent else
+  let rec aux res rest = function
+    | [] -> res,rest
+    | x::xs -> if x <> "" then res,(x::xs) else aux (res+1) xs xs in 
+  let indent,rest = aux 0 [] line in
+  if indent <= depth then indent,rest else
     perror_and_exit "indentation problem" pos
 
 
@@ -86,19 +86,23 @@ let read_cond pos e =
   in (e1,read_comp pos c, e2) 
 
 let read_instr pos lb words_list =
-  let depth = check_indent pos lb words_list in
-  (* if depth > lb then perror_and_exit "indentation bug" pos else *)
-  match List.hd words_list with
-  | "READ" -> let name = List.tl words_list in (depth,Read (read_name pos name))
-  | "PRINT" -> (depth,Print(read_expr pos (read_name pos (List.tl words_list))))
-  | "IF" -> (depth+2, If (read_cond pos (read_string words_list),[],[]))
-  | "WHILE" -> (depth+2, While (read_cond pos (read_string words_list),[]))
-  | "COMMENT" -> (depth, Comment (read_string words_list))
-  | _ -> failwith "TODO SET"
+  let (depth,r) = check_indent pos lb words_list in
+  let rest = List.filter (fun x -> x <> "") r in
+  match List.hd rest with
+  | "READ" -> let name = List.tl rest in (depth,Read (read_name pos name))
+  | "PRINT" -> (depth,Print(read_expr pos (read_name pos (List.tl rest))))
+  | "IF" -> (depth+2, If (read_cond pos (read_string (List.tl rest)),[],[]))
+  | "WHILE" -> (depth+2, While (read_cond pos (read_string (List.tl rest)),[]))
+  | "COMMENT" -> (depth, Comment (read_string (List.tl rest)))
+  | name -> (match List.hd (List.tl rest) with
+      | ":=" -> 
+        let expr_string = read_string (List.tl (List.tl rest)) in
+        (depth, Set(name, read_expr pos expr_string ))
+      | _ -> perror_and_exit "syntax error in set" pos)
 
 
 
-let read_block b = failwith "TODO"
+let read_block b = failwith " block TODO"
 
 let read_lines (filename:string) =
   let ic = open_in filename in

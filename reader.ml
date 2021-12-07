@@ -85,24 +85,41 @@ let read_cond pos e =
          perror_and_exit "not a valid condition" pos)
   in (e1,read_comp pos c, e2) 
 
-let read_instr pos lb words_list =
-  let (depth,r) = check_indent pos lb words_list in
-  let rest = List.filter (fun x -> x <> "") r in
-  match List.hd rest with
-  | "READ" -> let name = List.tl rest in (depth,Read (read_name pos name))
-  | "PRINT" -> (depth,Print(read_expr pos (read_name pos (List.tl rest))))
-  | "IF" -> (depth+2, If (read_cond pos (read_string (List.tl rest)),[],[]))
-  | "WHILE" -> (depth+2, While (read_cond pos (read_string (List.tl rest)),[]))
-  | "COMMENT" -> (depth, Comment (read_string (List.tl rest)))
-  | name -> (match List.hd (List.tl rest) with
+let fst_line_list pos lb lines =
+  if List.length lines = 0 then (-1,[]) else
+    let (pos,line) = List.hd lines in
+    let line_l = split_on_char ' ' line in
+    let (depth,r) = check_indent pos lb line_l in
+    depth,List.filter (fun x -> x <> "") r
+
+let rec read_instr pos lb lines = 
+  let depth,words_list = fst_line_list pos lb lines in
+  match List.hd words_list with
+  | "READ" -> let name = List.tl words_list in (pos,depth,Read (read_name pos name), List.tl lines)
+  | "PRINT" -> (pos,depth,Print(read_expr pos (read_name pos (List.tl words_list))), List.tl lines)
+  | "IF" -> let block1,rest = (read_block pos (depth+2) (List.tl lines)) in
+    let depth,l = (fst_line_list pos depth rest) in
+    let block2,rest2 = if depth != (-1) && List.hd l = "ELSE" then (read_block pos (depth+2) (List.tl lines)) else [],rest in
+    (pos,depth+2, If (read_cond pos (read_string (List.tl words_list)), block1 ,block2),rest2)(*TODO*)
+  | "WHILE" -> let block,rest = (read_block pos (depth+2) (List.tl lines)) in
+    (pos,depth+2, While (read_cond pos (read_string (List.tl words_list)),block),rest)(*TODO*)
+  | "COMMENT" -> (pos,depth, Comment (read_string (List.tl words_list)),List.tl lines)
+  | name -> (match List.hd (List.tl words_list) with
       | ":=" -> 
-        let expr_string = read_string (List.tl (List.tl rest)) in
-        (depth, Set(name, read_expr pos expr_string ))
+        let expr_string = read_string (List.tl (List.tl words_list)) in
+        (pos,depth, Set(name, read_expr pos expr_string),List.tl lines)
       | _ -> perror_and_exit "syntax error in set" pos)
 
 
 
-let read_block b = failwith " block TODO"
+and read_block pos lb lines =
+  let rec aux res lb = function
+    | x::xs as l -> let (pos,depth,instr,rest) = read_instr pos lb l in
+      if depth = lb then aux ((pos,instr)::res) lb rest else List.rev res,rest 
+    | [] -> List.rev res,[]
+  in aux [] lb lines
+
+
 
 let read_lines (filename:string) =
   let ic = open_in filename in
@@ -114,9 +131,18 @@ let read_lines (filename:string) =
 
 
 let read_polish (filename:string) (*: program*) = 
-  let lines = read_lines filename in
-  let rec aux last_b res = function
-    | (p,x)::xs -> let (depth,instr) = read_instr p last_b (split_on_char ' ' x) in 
-      aux depth ((p,instr)::res) xs
+  let lines = read_lines filename
+  in let block,rest = read_block 0 0 lines 
+  in block
+(* let rec aux last_b res = function
+   | l -> let (pos,depth,instr,rest) = read_instr l in 
+    aux depth ((pos,instr)::res) rest
+   | [] -> res
+   in aux 0 [] lines *)
+(* let read_polish (filename:string) (*: program*) = 
+   let lines = read_lines filename in
+   let rec aux last_b res = function
+    | (p,x)::xs -> let (pos,depth,instr,rest) = read_instr p last_b (split_on_char ' ' x) in 
+      aux depth ((p,instr)::res) rest
     | [] -> res
-  in aux 0 [] lines
+   in aux 0 [] lines *)

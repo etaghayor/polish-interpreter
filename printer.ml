@@ -35,7 +35,7 @@ let rec print_indent indent = match indent with
   | _ -> " " ^ print_indent (indent - 1)
 ;;
 
-let rec print_intruction indent =  function
+let rec print_intruction indent = function
   | Set (name, expr) -> print_indent indent ^ name ^ " := " ^ print_expr expr ^ "\n"
   | Read name -> print_indent indent ^ "READ " ^ name ^ "\n"
   | Print expr -> print_indent indent ^ "PRINT " ^ print_expr expr ^ "\n"
@@ -46,7 +46,7 @@ let rec print_intruction indent =  function
   | While (cond, block) ->
     print_indent indent ^ "WHILE " ^ print_cond cond ^ "\n" ^
     print_block (indent+2) block
-  (*| Comment name -> print_indent indent ^ "COMMENT" ^ name ^ "\n"*)
+  | Comment name -> print_indent indent ^ "COMMENT" ^ name ^ "\n"
 
 and print_block indent = function
   |[] -> ""
@@ -54,7 +54,7 @@ and print_block indent = function
 ;;
 
 
-let comp = Eq;;
+(*let comp = Eq;;
 (*printf "%s\n" (print_comp comp);;*)
 
 let exp1 = Op(Add, Num 2, Num 1);;
@@ -70,4 +70,4 @@ let ins1 = Print (exp1);;
 let ins2 = Set ("x", exp1);;
 let ins3 = While (cnd, [(4, ins2); (5, ins1)]);;
 let blk = [(1, ins1); (2, ins3); (3, ins2)];;
-printf "%s" (print_block 0 blk);;
+printf "%s" (print_block 0 blk);;*)

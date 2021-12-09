@@ -135,16 +135,5 @@ let read_lines (filename:string) =
 let read_polish (filename:string) (*: program*) = 
   let lines = read_lines filename
   in let block,rest = read_block 0 0 lines 
-  in block
-(* let rec aux last_b res = function
-   | l -> let (pos,depth,instr,rest) = read_instr l in 
-    aux depth ((pos,instr)::res) rest
-   | [] -> res
-   in aux 0 [] lines *)
-(* let read_polish (filename:string) (*: program*) = 
-   let lines = read_lines filename in
-   let rec aux last_b res = function
-    | (p,x)::xs -> let (pos,depth,instr,rest) = read_instr p last_b (split_on_char ' ' x) in 
-      aux depth ((p,instr)::res) rest
-    | [] -> res
-   in aux 0 [] lines *)
+  in let env = Env.empty
+  in block,env

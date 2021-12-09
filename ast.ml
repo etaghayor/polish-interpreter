@@ -1,6 +1,8 @@
 (*****************************************************************************)
 (** Syntaxe abstraite Polish (types imposés, ne pas changer sauf extensions) *)
 
+module Env = Map.Make(String)
+
 (** Position : numéro de ligne dans le fichier, débutant à 1 *)
 type position = int
 
@@ -39,7 +41,7 @@ type instr =
 and block = (position * instr) list
 
 (** Un programme Polish est un bloc d'instructions *)
-type program = block
+type program = block * (int Env.t)
 
 
 (***********************************************************************)

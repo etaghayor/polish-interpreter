@@ -13,10 +13,10 @@ let eval_op = function
   | Mod -> ( mod )
 ;;
 
-let rec eval_expr = function
+let rec eval_expr env = function
   | Num n -> n
-  | Var x-> 1
-  | Op(op, ex1, ex2)-> (eval_op op) (eval_expr ex1) (eval_expr ex2)
+  | Var x -> Env.find x env
+  | Op(op, ex1, ex2) -> (eval_op op) (eval_expr env ex1) (eval_expr env ex2)
 
 let eval_comp = function
   | Eq -> ( = )
@@ -27,10 +27,33 @@ let eval_comp = function
   | Ge -> ( >= )
 ;;
 
-let eval_cond pos cond = 
+let eval_cond cond env = 
   let ex1, comp, ex2 = cond in 
   (eval_comp comp) ex1 ex2
-(*let print_intruction = failwith "TODO P"
 
-  let print_block = failwith "TODO Print"
-*)
+
+
+let rec eval_instr env = function
+  | Set (name, e) -> env
+  | Read name -> let n = read_int() in Env.add name n env 
+  | Print e -> let res = eval_expr env e in printf "%d\n" res; env
+  | If (c,b1,b2) -> if eval_cond c env then eval_block b1 env 
+  else eval_block b2 env
+  | While (c,b) -> while_aux c b env
+  | Comment str -> env 
+and while_aux cond block env =
+if eval_cond cond env then (let new_env = eval_block block env in while_aux cond block new_env)
+ else env
+and eval_block b env = 
+    let rec aux env = function
+    | [] -> env
+    | (pos,instr)::xs -> let new_env = eval_instr env instr in aux env xs
+    in aux env b
+;;
+let eval_polish program =
+  let block,env = program in eval_block block env
+  (*let print_intruction = failwith "TODO P"
+
+    let print_block = failwith "TODO Print"
+  *)
+  

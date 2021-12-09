@@ -1,5 +1,7 @@
 open Ast
 open Reader
+open Evaluator
+open Printer
   
 (** Projet Polish -- Analyse statique d'un mini-langage impératif *)
 
@@ -7,10 +9,10 @@ open Reader
     polish.ml. Il est recommandé d'architecturer ultérieurement votre
     projet en plusieurs fichiers source de tailles raisonnables *)
 
-(* let print_polish (p:program) : unit = failwith "TODO" *)
-let print_polish p : unit = failwith "print TODO"
+let print_polish (p:program) : unit = failwith "TODO"
+(* let print_polish p : unit = failwith "print TODO"
 
-let eval_polish p : unit = failwith "eval TODO"
+let eval_polish p : unit = failwith "eval TODO" *)
 (* let eval_polish (p:program) : unit = failwith "TODO" *)
 
 let usage () =
@@ -20,7 +22,7 @@ let usage () =
 let main () =
   match Sys.argv with
   | [|_;"-reprint";file|] -> print_polish (read_polish file)
-  | [|_;"-eval";file|] -> eval_polish (read_polish file)
+  | [|_;"-eval";file|] -> let env = eval_polish (read_polish file) in ()
   | _ -> usage ()
 
 (* lancement de ce main *)

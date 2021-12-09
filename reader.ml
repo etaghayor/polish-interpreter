@@ -99,7 +99,7 @@ let rec read_instr lb lines =
               in (pos,depth,Read _var_name, tail)
   | "PRINT" -> let exp = read_expr pos (read_string (List.tl words_list))
               in (pos,depth,Print exp, tail)
-  | "IF" -> print_string "HERE\n";
+  | "IF" ->
     let block1,rest = (read_block pos (depth+2) (tail)) 
     in let p,depth,l = (fst_line_list depth rest) 
     in let block2,rest2 = if List.length l > 0 && List.hd l = "ELSE" 

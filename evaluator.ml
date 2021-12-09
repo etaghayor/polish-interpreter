@@ -29,17 +29,18 @@ let eval_comp = function
 
 let eval_cond cond env = 
   let ex1, comp, ex2 = cond in 
-  (eval_comp comp) ex1 ex2
+  ((eval_comp comp) (eval_expr env ex1) (eval_expr env ex2))
 
 
 
 let rec eval_instr env = function
-  | Set (name, e) -> let n = eval_expr env e in print_string name ;print_int n; Env.add name n env 
+  | Set (name, e) -> let n = eval_expr env e in Env.add name n env 
   | Read name -> let n = read_int() in Env.add name n env 
   | Print e -> let n = eval_expr env e in printf "%d\n" n; env
-  | If (c,b1,b2) -> if eval_cond c env then eval_block b1 env 
+  | If (c,b1,b2) -> if eval_cond c env then eval_block b1 env
   else eval_block b2 env
-  | While (c,b) -> while_aux c b env
+  | While (c,b) as w-> while_aux c b env
+     (*let new_env = eval_block b env in eval_instr new_env w *)
   | Comment str -> env 
 and while_aux cond block env =
 if eval_cond cond env then (let new_env = eval_block block env in while_aux cond block new_env)

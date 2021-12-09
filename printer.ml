@@ -2,6 +2,8 @@ open Printf
 open String
 open Ast
 
+(*abstract-> concrete; Add 1 2 -> + 1 2 *)
+
 let perror_and_exit msg pos =
   failwith (msg ^ ". Print, line: " ^ string_of_int pos)
 
@@ -15,8 +17,7 @@ let print_op pos op =
   | _ -> perror_and_exit "syntax error: not an operator" pos
 ;;
 
-let rec print_expr pos expr =
-  match expr with
+let rec print_expr pos = function
   |Num n-> string_of_int n
   |Var x-> x
   |Op(op, ex1, ex2)-> (print_op pos op) ^ "(" ^ (print_expr pos ex1) ^ ")" ^ " (" ^ (print_expr pos ex2) ^ ")"

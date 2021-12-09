@@ -43,7 +43,7 @@ let print_cond pos cond =
 *)
 
 
-let comp = Eq;;
+(* let comp = Eq;;
 printf "%s\n" (print_comp 0 comp);;
 
 let exp1 = Op(Add, Num 2, Num 1);;
@@ -52,4 +52,4 @@ printf "%s\n" (print_expr 0  exp1);;
 printf "%s\n" (print_expr 0 exp2);;
 
 let cond = exp1, Lt, exp2;;
-printf "%s\n" (print_cond 0 cond);;
+printf "%s\n" (print_cond 0 cond);; *)

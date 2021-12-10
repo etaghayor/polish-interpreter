@@ -53,8 +53,3 @@ and eval_block b env =
 ;;
 let eval_polish program =
   let block,env = program in eval_block block env
-  (*let print_intruction = failwith "TODO P"
-
-    let print_block = failwith "TODO Print"
-  *)
-  

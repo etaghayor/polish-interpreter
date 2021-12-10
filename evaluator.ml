@@ -40,9 +40,8 @@ let rec eval_instr env = function
   | If (c,b1,b2) -> if eval_cond c env then eval_block b1 env
   else eval_block b2 env
   | While (c,b) as w-> while_aux c b env
-     (*let new_env = eval_block b env in eval_instr new_env w *)
   | Comment str -> env 
-and while_aux cond block env =
+  and while_aux cond block env =
 if eval_cond cond env then (let new_env = eval_block block env in while_aux cond block new_env)
  else env
 and eval_block b env = 
@@ -50,6 +49,3 @@ and eval_block b env =
     | [] -> env
     | (pos,instr)::xs -> let new_env = eval_instr env instr in aux new_env xs
     in aux env b
-;;
-let eval_polish program =
-  let block,env = program in eval_block block env

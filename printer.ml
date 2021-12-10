@@ -51,11 +51,10 @@ let rec print_intruction indent = function
   | While (cond, block) ->
     print_indent indent ^ "WHILE " ^ print_cond cond ^ "\n" ^
     print_block (indent+2) block
-  | Comment name -> print_indent indent ^ "COMMENT " ^ name ^ "\n"
+  | Comment name -> ""
 
 and print_block indent = function
   |[] -> ""
   |(pos, ins) :: tl -> print_intruction indent ins ^ print_block indent tl
 ;;
 
-let print_polish p = let block, env = p in Printf.printf "%s" (print_block 0 block);;

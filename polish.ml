@@ -3,8 +3,6 @@ open Reader
 open Evaluator
 open Printer
 
-
-
 let eval_polish program =
   let block,env = program in eval_block block env
 

@@ -8,13 +8,13 @@ let print_op = function
   | Mul -> "* "
   | Div -> "/ "
   | Mod -> "% "
-;;
+
 
 let rec print_expr = function
   |Num n-> string_of_int n
   |Var x-> x
   |Op(op, ex1, ex2)-> (print_op op) ^ (print_expr ex1) ^ " " ^ (print_expr ex2)
-;;
+
 
 let print_comp = function
   | Eq -> " = "
@@ -23,17 +23,17 @@ let print_comp = function
   | Le -> " <= "
   | Gt -> " > "
   | Ge -> " >= "
-;;
+
 
 let print_cond cond = 
   let ex1, comp, ex2 = cond in 
   (print_expr ex1) ^ (print_comp comp) ^ (print_expr ex2)
-;;
+
 
 let rec print_indent indent = match indent with
   | 0 -> ""
   | _ -> " " ^ print_indent (indent - 1)
-;;
+
 
 let rec print_intruction indent = function
   | Set (name, expr) -> print_indent indent ^ name ^ " := " ^ print_expr expr ^ "\n"
@@ -56,5 +56,3 @@ let rec print_intruction indent = function
 and print_block indent = function
   |[] -> ""
   |(pos, ins) :: tl -> print_intruction indent ins ^ print_block indent tl
-;;
-

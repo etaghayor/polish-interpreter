@@ -11,7 +11,7 @@ let eval_op = function
   | Mul -> ( * )
   | Div -> ( / )
   | Mod -> ( mod )
-;;
+
 
 let rec eval_expr env = function
   | Num n -> n
@@ -25,7 +25,7 @@ let eval_comp = function
   | Le -> ( <= )
   | Gt -> ( > )
   | Ge -> ( >= )
-;;
+
 
 let eval_cond cond env = 
   let ex1, comp, ex2 = cond in 

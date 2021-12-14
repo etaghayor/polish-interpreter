@@ -11,8 +11,8 @@ Dans les trois parties, les opérations, expressions, comparateurs, conditions, 
 et blocs sont gérés dans des fonctions différentes.
 
 La compilation se fait à l'aide de la commande "make" à la racine du dépot, et l'execution 
-est de la forme "./run eval $path/fichier_polish.p" pour l'evaluation du fichier polish 
-ou "./run reprint $path/fichier_polish.p" pour la reécriture.
+est de la forme "./run -eval $path/fichier_polish.p" pour l'evaluation du fichier polish 
+ou "./run -reprint $path/fichier_polish.p" pour la reécriture.
 
 A noter que les fonctions marchent aussi sans passer par la lecture d'un fichier.p, par exemple :
 read_op Add créera un "type op" Add;

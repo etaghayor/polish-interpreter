@@ -51,7 +51,6 @@ let rec print_intruction indent = function
   | While (cond, block) ->
     print_indent indent ^ "WHILE " ^ print_cond cond ^ "\n" ^
     print_block (indent+2) block
-  | Comment name -> ""
 
 and print_block indent = function
   |[] -> ""

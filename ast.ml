@@ -37,7 +37,6 @@ type instr =
   | Print of expr
   | If of cond * block * block
   | While of cond * block
-  | Comment of name
 and block = (position * instr) list
 
 (** Un programme Polish est un bloc d'instructions *)

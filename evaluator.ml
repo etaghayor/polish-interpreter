@@ -40,7 +40,6 @@ let rec eval_instr env = function
   | If (c,b1,b2) -> if eval_cond c env then eval_block b1 env
   else eval_block b2 env
   | While (c,b) as w-> while_aux c b env
-  | Comment str -> env 
   and while_aux cond block env =
 if eval_cond cond env then (let new_env = eval_block block env in while_aux cond block new_env)
  else env

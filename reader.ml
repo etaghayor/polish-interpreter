@@ -104,9 +104,9 @@ let rec read_instr lb lines =
     in let p,depth,l = (fst_line_list depth rest) 
     in let block2,rest2 = if List.length l > 0 && List.hd l = "ELSE" 
       then (read_block p (depth+2) (List.tl rest)) else [],rest in Some
-    (pos,depth+2, If (read_cond pos (read_string (List.tl words_list)), block1 ,block2),rest2)
+    (pos,depth, If (read_cond pos (read_string (List.tl words_list)), block1 ,block2),rest2)
   | "WHILE" -> let block,rest = (read_block pos (depth+2) (tail)) in Some
-    (pos,depth+2, While (read_cond pos (read_string (List.tl words_list)),block),rest)
+    (pos,depth, While (read_cond pos (read_string (List.tl words_list)),block),rest)
   | "COMMENT" -> None
   | "ELSE" -> None
   | name -> (match List.hd (List.tl words_list) with

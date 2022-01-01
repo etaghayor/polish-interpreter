@@ -2,6 +2,7 @@
 (** Syntaxe abstraite Polish (types imposés, ne pas changer sauf extensions) *)
 
 module Env = Map.Make(String)
+module Names = Set.Make(String)
 
 (** Position : numéro de ligne dans le fichier, débutant à 1 *)
 type position = int
@@ -38,6 +39,8 @@ type instr =
   | If of cond * block * block
   | While of cond * block
 and block = (position * instr) list
+
+type sign = Neg | Zero | Pos | Error
 
 (** Un programme Polish est un bloc d'instructions *)
 type program = block * (int Env.t)

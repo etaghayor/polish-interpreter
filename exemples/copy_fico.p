@@ -1,1 +1,1 @@
-PRINT 2
+PRINT n

@@ -4,6 +4,7 @@ open Evaluator
 open Printer
 open Simplifier 
 open Analyser
+open Signer
 
 let print_set = Names.iter (Printf.printf "%s, ")
 
@@ -20,15 +21,20 @@ let vars_polish p =
   let block,env = p in
   analyse_block Names.empty Names.empty Names.empty block
 
-(* 
+let print_type sign = 
+  print_string 
+    (match sign with
+     | Zero ->  "0 "
+     | Pos -> "+ " 
+     | Neg -> "- "
+     | _ -> "! ")
+
 let sign_polish p = 
-  let block,env = p in
-  let vars,good_vars,set_vars = analyse_block Names.empty Names.empty Names.empty block
-  in Names.iter (Printf.printf "%s, ") vars;
-  Names.iter (Printf.printf "%s, ") good_vars;
-  Names.iter (Printf.printf "%s, ") set_vars;
-  let bad_vars = (Names.diff good_vars set_vars)
-  in vars,bad_vars *)
+  let block,_ = p in
+  let env = sign_block block Env.empty in
+  Env.iter (fun key v -> Printf.printf "%s : " key;
+             List.iter (print_type) v;
+             print_string "\n") env
 
 let usage () =
   print_string "Polish : analyse statique d'un mini-langage\n";
@@ -43,8 +49,8 @@ let main () =
     in Names.iter (Printf.printf "%s, ") all;
     print_string "\nbads: ";
     Names.iter (Printf.printf "%s, ") bvars;
-    print_string "\n"
-  (* |  [|_;"-sign";file|] -> let v,v2 = sign_polish (read_polish file) in () *)
+    print_string "\n";
+  |  [|_;"-sign";file|] -> sign_polish (read_polish file)
   | _ -> usage ()
 
 (* lancement de ce main *)

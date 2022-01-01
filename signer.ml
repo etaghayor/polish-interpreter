@@ -1,13 +1,24 @@
 open Printf
 open String
-(* open Evaluator *)
+open Evaluator
 open Ast
 
 let perror_and_exit msg pos =
   failwith (msg ^ ". Print, line: " ^ string_of_int pos)
 
+let add_sign sign1 sign2 =
+  (sign2 @ (List.filter (fun x -> not(List.mem x sign2)) sign1))
+
 let reverse_sign sign_list = 
   List.filter (fun x -> not (List.mem x sign_list)) [Pos;Neg;Zero;Error] 
+
+let reverse_comp = function
+  | Eq -> Ne
+  | Ne -> Eq
+  | Lt -> Ge
+  | Le -> Gt
+  | Gt -> Le
+  | Ge -> Lt
 
 let sign_op sign1 sign2 = function
   | Add -> (match sign1 with
@@ -39,7 +50,9 @@ let sign_op sign1 sign2 = function
       | [Zero] -> [Zero]
       | _ -> sign2
     )
-  | Div -> (match sign1 with
+  | Div -> 
+    if(List.mem Zero sign2 ) then add_sign [Error] sign1 else sign1
+  (* (match sign1 with
       | [Pos] -> (match sign2 with 
           | [Zero] -> [Error]
           | t -> t)
@@ -51,7 +64,7 @@ let sign_op sign1 sign2 = function
           | [Zero] -> [Error]
           | _ -> [Zero])
       | _ -> sign2
-    )
+     ) *)
   | Mod -> (match sign2 with 
       | [Zero] -> [Error]
       | _ -> [Zero; Pos])
@@ -63,15 +76,6 @@ let rec sign_expr env = function
   | Op(op, ex1, ex2) ->
     let sign1 = sign_expr env ex1 in let sign2 = sign_expr env ex2 in
     sign_op sign1 sign2 op
-
-
-let sign_comp = function
-  | Eq -> ( = )
-  | Ne -> ( <> )
-  | Lt -> ( < )
-  | Le -> ( <= )
-  | Gt -> ( > )
-  | Ge -> ( >= )
 
 let greater_than sign_list =
   let all = [Neg;Zero;Pos;Error] in
@@ -85,42 +89,56 @@ let inter_not_possible sign1 sign2 =
   let inter = List.filter (fun x -> List.mem x sign2) sign1 in 
   inter = [Error] || inter = []
 
-let is_cond_possible sign1 comp sign2 env =
+let is_cond_possible cond env =
+  let ex1, comp, ex2 = cond in 
+  let sign2 = sign_expr env ex2 in
+  let sign1 = sign_expr env ex1 in
   if inter_not_possible sign1 sign2 = true then false else
     match comp with
-    | Lt -> inter_not_possible (greater_than sign1 ) sign2
-    | Gt -> true
-    | Ne -> true
-    | _-> false
+    | Lt | Le -> inter_not_possible (greater_than sign1) sign2
+    | Gt | Ge -> inter_not_possible (greater_than sign2) sign1
+    | Ne -> if sign1 = [Error] && sign2 = [Error] then false else true
+    | Eq -> not (inter_not_possible sign1 sign2 )
 
 let sign_cond cond env = 
   let ex1, comp, ex2 = cond in 
-  let sign2 = sign_expr env ex2 in
-  match comp with
-  | Ne -> (match sign2 with
-      | [Zero] -> reverse_sign sign2
-      | t -> t)
-  | Lt -> (match sign2 with
-      | [Zero;Neg] -> [Neg]
-      | t -> t)
-  | Gt -> (match sign2 with
-      | [Zero;Pos] -> [Pos]
-      | t -> t)
-  | _ -> sign2
-(* ((sign_comp comp) (sign_expr env ex1) (sign_expr env ex2)) *)
+  let e1,e2 = match ex1 with 
+    | Var _ -> ex1,ex2
+    | _ -> ex2,ex1 
+  in let sign2 = sign_expr env e2 in
+  let sign1 = sign_expr env e1 in
+  let sign = 
+    (match comp with
+     | Ne -> (match sign2 with
+         | [Zero] -> reverse_sign sign2
+         | t -> t)
+     | Lt -> (match sign2 with
+         | [Zero;Neg] -> [Neg]
+         | t -> t)
+     | Gt -> (match sign2 with
+         | [Zero;Pos] -> [Pos]
+         | t -> t)
+     | _ -> sign2 )
+  in match e1 with
+  | Var name -> Env.add name sign env
+  | _ -> env
 
 
 
 let rec sign_instr env = function
-  | Set (name, e) -> let n = sign_expr env e in Env.add name n env 
-  | Read name -> let n = read_int() in let sign = sign_expr env (Num n) in
+  | Set (name, e) -> Env.add name (sign_expr env e)  env 
+  | Read name ->  let sign = [Pos;Neg;Zero] in
     Env.add name sign env 
   | Print e -> env
-  | If (c,b1,b2) -> let sign_list = sign_cond c env in
-    let env1 = sign_block b1 (Env.add "ohh" sign_list env) in
-    let env2 = sign_block b2 (Env.add "ohh" (reverse_sign sign_list) env) in
-    env
-  | While (c,b) as w-> env
+  | If (c,b1,b2) -> let e1,comp,e2  = c in 
+    let cond_else = e1,reverse_comp comp,e2 in
+    let if_env = sign_block b1 env in 
+    let else_env = sign_block b2 env  in
+    if not (is_cond_possible c env) then else_env
+    else if not (is_cond_possible cond_else env) then if_env
+    else let f = fun x val1 val2 -> Some (add_sign val1 val2)
+      in Env.union (f) if_env else_env
+  | While (c,b) as w -> env
 
 and sign_block b env = 
   match b with

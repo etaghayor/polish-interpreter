@@ -1,4 +1,8 @@
 n :=  1
-WHILE 0 > 1
+IF 0 > 1
   READ a
+  PRINT a
+ELSE
+  READ a
+  COMMENT PRINT a
 PRINT a

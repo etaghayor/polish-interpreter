@@ -6,7 +6,7 @@ open Ast
 let perror_and_exit msg pos =
   failwith (msg ^ ". Print, line: " ^ string_of_int pos)
 
-let add_sign sign1 sign2 =
+let union_sign sign1 sign2 =
   (sign2 @ (List.filter (fun x -> not(List.mem x sign2)) sign1))
 
 let reverse_sign sign_list = 
@@ -20,7 +20,9 @@ let reverse_comp = function
   | Gt -> Le
   | Ge -> Lt
 
-let sign_op sign1 sign2 = function
+let rec sign_op env ex1 ex2 op = 
+  let sign1 = sign_expr env ex1 in let sign2 = sign_expr env ex2 in
+  match op with
   | Add -> (match sign1 with
       | [Pos] -> (match sign2 with 
           | [Zero] -> [Pos]
@@ -33,49 +35,36 @@ let sign_op sign1 sign2 = function
       | [Error] -> [Error]
       | _ -> sign2
     )
-  | Sub -> (match sign1 with
-      | [Pos] -> (match sign2 with 
-          | [Zero] -> [Pos]
-          | [Pos] -> [Neg;Zero; Pos]
-          | t -> t)
-      | [Neg] -> (match sign2 with 
-          | [Zero] -> [Neg]
-          | [Pos] -> [Neg;Zero; Pos]
-          | t -> t)
-      | [Error] -> [Error]
-      | _ -> sign2
-    )
+  | Sub -> 
+    if ex1 = ex2 then Zero::(List.filter ((=) Error) sign2) else
+      (match sign1 with
+       | [Pos] -> (match sign2 with 
+           | [Zero] -> [Pos]
+           | [Pos] -> [Neg;Zero; Pos]
+           | t -> t)
+       | [Neg] -> (match sign2 with 
+           | [Zero] -> [Neg]
+           | [Pos] -> [Neg;Zero; Pos]
+           | t -> t)
+       | [Error] -> [Error]
+       | _ -> sign2
+      )
   | Mul -> (match sign1 with
       | [Error] -> [Error]
       | [Zero] -> [Zero]
       | _ -> sign2
     )
   | Div -> 
-    if(List.mem Zero sign2 ) then add_sign [Error] sign1 else sign1
-  (* (match sign1 with
-      | [Pos] -> (match sign2 with 
-          | [Zero] -> [Error]
-          | t -> t)
-      | [Neg] -> (match sign2 with 
-          | [Zero] -> [Error]
-          | t -> t)
-      | [Error] -> [Error]
-      | [Zero] -> (match sign2 with 
-          | [Zero] -> [Error]
-          | _ -> [Zero])
-      | _ -> sign2
-     ) *)
+    if (List.mem Zero sign2 ) then union_sign [Error] sign1 else union_sign sign1 sign2
   | Mod -> (match sign2 with 
       | [Zero] -> [Error]
       | _ -> [Zero; Pos])
 
 
-let rec sign_expr env = function
+and sign_expr env = function
   | Num n -> if n > 0 then [Pos] else if n < 0 then [Neg] else [Zero]
   | Var x -> Env.find x env
-  | Op(op, ex1, ex2) ->
-    let sign1 = sign_expr env ex1 in let sign2 = sign_expr env ex2 in
-    sign_op sign1 sign2 op
+  | Op(op, ex1, ex2) -> sign_op env ex1 ex2 op
 
 let greater_than sign_list =
   let all = [Neg;Zero;Pos;Error] in
@@ -136,7 +125,7 @@ let rec sign_instr env = function
     let else_env = sign_block b2 env  in
     if not (is_cond_possible c env) then else_env
     else if not (is_cond_possible cond_else env) then if_env
-    else let f = fun x val1 val2 -> Some (add_sign val1 val2)
+    else let f = fun x val1 val2 -> Some (union_sign val1 val2)
       in Env.union (f) if_env else_env
   | While (c,b) as w -> env
 
@@ -144,4 +133,3 @@ and sign_block b env =
   match b with
   | [] -> env
   | (pos,instr)::xs -> let new_env = sign_instr env instr in sign_block xs new_env
-(* in aux env b *)

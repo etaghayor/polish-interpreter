@@ -9,4 +9,5 @@ PRINT a
 a := 2
 b := + n a
 b := / n 0
-c := - a a
+c := - b b
+d := / 0 b

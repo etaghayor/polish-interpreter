@@ -3,7 +3,6 @@
 
 module Env = Map.Make(String)
 module Names = Set.Make(String)
-
 (** Position : numéro de ligne dans le fichier, débutant à 1 *)
 type position = int
 

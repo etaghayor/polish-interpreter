@@ -20,6 +20,7 @@ let reverse_comp = function
   | Gt -> Le
   | Ge -> Lt
 
+(************TODO**********)
 let rec sign_op env ex1 ex2 op = 
   let sign1 = sign_expr env ex1 in let sign2 = sign_expr env ex2 in
   match op with
@@ -36,7 +37,7 @@ let rec sign_op env ex1 ex2 op =
       | _ -> sign2
     )
   | Sub -> 
-    if ex1 = ex2 then Zero::(List.filter ((=) Error) sign2) else
+    if ex1 = ex2 then if sign2 = [Error] then [Error] else Zero::(List.filter ((=) Error) sign2) else
       (match sign1 with
        | [Pos] -> (match sign2 with 
            | [Zero] -> [Pos]
@@ -54,8 +55,16 @@ let rec sign_op env ex1 ex2 op =
       | [Zero] -> [Zero]
       | _ -> sign2
     )
-  | Div -> 
-    if (List.mem Zero sign2 ) then union_sign [Error] sign1 else union_sign sign1 sign2
+  | Div -> (match sign1 with
+      | [Zero] -> if (List.mem Error sign2) then [Error] else [Zero] 
+      | _ -> (match sign2 with
+          | [Zero] | [Error] -> [Error]
+          | _ ->  if (List.mem Zero sign2) then union_sign [Error] sign1
+            else union_sign sign1 sign2
+        ))
+  (* if (List.mem Zero sign2) then if sign2 = [Zero] then [Error] else union_sign [Error] sign1 else 
+     if sign1 = [Zero] then 
+     else union_sign sign1 sign2 *)
   | Mod -> (match sign2 with 
       | [Zero] -> [Error]
       | _ -> [Zero; Pos])
@@ -96,25 +105,40 @@ let sign_cond cond env =
     | _ -> ex2,ex1 
   in let sign2 = sign_expr env e2 in
   let sign1 = sign_expr env e1 in
-  let sign = 
+  let sign = (************TODO**********)
     (match comp with
      | Ne -> (match sign2 with
          | [Zero] -> reverse_sign sign2
          | t -> t)
      | Lt -> (match sign2 with
-         | [Zero;Neg] -> [Neg]
+         | [Neg;Zero] | [Zero] -> [Neg]
+         | [Zero;Error] | [Neg;Zero;Error] -> [Neg;Error]
          | t -> t)
      | Gt -> (match sign2 with
-         | [Zero;Pos] -> [Pos]
+         | [Zero;Pos] | [Zero] -> [Pos]
+         | [Zero;Error] | [Zero;Pos;Error] -> [Pos;Error]
+         | t -> t)
+     | Le -> (match sign2 with
+         | [Zero] -> [Zero;Neg]
+         | [Zero;Error] -> [Neg;Zero;Error]
+         | t -> t)
+     | Ge -> (match sign2 with
+         | [Zero] -> [Pos]
+         | [Zero;Error] -> [Zero;Pos;Error]
          | t -> t)
      | _ -> sign2 )
   in match e1 with
   | Var name -> Env.add name sign env
   | _ -> env
 
+let rec sign_while env (c,b)= 
+  let env1 = sign_cond c env in
+  let env2 = sign_block b env1 in
+  if env2 = env then env else 
+    sign_while env2 (c,b)
 
 
-let rec sign_instr env = function
+and sign_instr env = function
   | Set (name, e) -> Env.add name (sign_expr env e)  env 
   | Read name ->  let sign = [Pos;Neg;Zero] in
     Env.add name sign env 
@@ -127,7 +151,7 @@ let rec sign_instr env = function
     else if not (is_cond_possible cond_else env) then if_env
     else let f = fun x val1 val2 -> Some (union_sign val1 val2)
       in Env.union (f) if_env else_env
-  | While (c,b) as w -> env
+  | While (c,b) -> sign_while env (c,b)
 
 and sign_block b env = 
   match b with

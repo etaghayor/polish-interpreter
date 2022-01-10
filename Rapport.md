@@ -31,18 +31,23 @@ Quant à l'évolution au cours du temps, le reader a pris le plus de temps, et l
 ### Deuxieme Partie
 Dans cette dexieme partie, on a ecrit 3 fichiers: 
 
-    - Simplifier.ml : Simplifie un programme effectuant une propagation des constantes et l’élimination des blocs “morts”.
-    - Analyser.ml : calcul statique des variables risquant d’être accédées avant d’être écrites.
+    - Simplifier.ml : Simplification d'un programme en effectuant une propagation des constantes et l’élimination des blocs “morts”.
+    - Analyser.ml : calcul statique des variables risquant d’être accédées avant d’être écrites et affichage les eventuelles erreurs.
     - Signer.ml : analyse statique du signe possible des variables lors du déroulement du programme, et application à la détermination du risque de division par zéro.
 
-On a utilisé le meme princpie que Evaluator dans Simplifier; sauf utiliser un environement pour sauvegarder les valeurs des variables. Cela nous a permis de trouver les valeurs constants independants de l'utilisateur.
+Ici aussi, le code est modularisé afin de mieux comprendre et interpréter la logique;
+et les fonctions agissent aussi bien sur un bloc, que sur une expression ou condition...
 
-Dans Analyser,
+Par exemple : simpl_expr Op(Add, Num 0, Var x) donnera x
+
 
 ## Compilation et Exécution
-
 Vous aurez besoin de la version 4.13.1 d'Ocaml pour l'execution du programme.
 
 La compilation se fait à l'aide de la commande "make" à la racine du dépot, et l'execution 
-est de la forme "./run -eval $path/fichier_polish.p" pour l'evaluation du fichier polish 
-ou "./run -reprint $path/fichier_polish.p" pour la reécriture.
+est de la forme 
+    "./run -eval $path/fichier_polish.p" pour l'evaluation du fichier polish 
+    "./run -reprint $path/fichier_polish.p" pour la reécriture
+    "./run -simpl $path/fichier_polish.p" pour la simplification
+    "./run -vars $path/fichier_polish.p" pour le calcul statique
+    "./run -sign $path/fichier_polish.p" pour l'analyse statique

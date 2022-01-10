@@ -21,19 +21,13 @@ let vars_polish p =
   let block,env = p in
   analyse_block Names.empty Names.empty Names.empty block
 
-let print_type sign = 
-  print_string 
-    (match sign with
-     | Zero ->  "0 "
-     | Pos -> "+ " 
-     | Neg -> "- "
-     | _ -> "! ")
+
 
 let sign_polish p = 
   let block,_ = p in
   let env = sign_block block Env.empty in
   Env.iter (fun key v -> Printf.printf "%s : " key;
-             List.iter (print_type) v;
+             print_type v;
              print_string "\n") env
 
 let usage () =

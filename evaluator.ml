@@ -12,7 +12,6 @@ let eval_op = function
   | Div -> ( / )
   | Mod -> ( mod )
 
-
 let rec eval_expr env = function
   | Num n -> n
   | Var x -> Env.find x env
@@ -38,13 +37,13 @@ let rec eval_instr env = function
   | Read name -> let n = read_int() in Env.add name n env 
   | Print e -> let n = eval_expr env e in printf "%d\n" n; env
   | If (c,b1,b2) -> if eval_cond c env then eval_block b1 env
-  else eval_block b2 env
-  | While (c,b) as w-> while_aux c b env
-  and while_aux cond block env =
-if eval_cond cond env then (let new_env = eval_block block env in while_aux cond block new_env)
- else env
+    else eval_block b2 env
+  | While (c,b)-> while_aux c b env
+and while_aux cond block env =
+  if eval_cond cond env then (let new_env = eval_block block env in while_aux cond block new_env)
+  else env
 and eval_block b env = 
-    let rec aux env = function
+  let rec aux env = function
     | [] -> env
     | (pos,instr)::xs -> let new_env = eval_instr env instr in aux new_env xs
-    in aux env b
+  in aux env b

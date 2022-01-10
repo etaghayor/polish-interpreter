@@ -35,7 +35,9 @@ Dans cette dexieme partie, on a ecrit 3 fichiers:
     - Analyser.ml : calcul statique des variables risquant d’être accédées avant d’être écrites.
     - Signer.ml : analyse statique du signe possible des variables lors du déroulement du programme, et application à la détermination du risque de division par zéro.
 
+On a utilisé le meme princpie que Evaluator dans Simplifier; sauf utiliser un environement pour sauvegarder les valeurs des variables. Cela nous a permis de trouver les valeurs constants independants de l'utilisateur.
 
+Dans Analyser,
 
 ## Compilation et Exécution
 

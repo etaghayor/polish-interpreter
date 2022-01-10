@@ -176,7 +176,6 @@ and sign_instr env = function
     let cond_else = e1,reverse_comp comp,e2 in
     let if_env = sign_block b1 env in 
     let else_env = sign_block b2 env  in
-    (* print_string "OH NO\n"; *)
     if not (is_cond_possible c env) then else_env
     else if not (is_cond_possible cond_else env) then if_env
     else let f = fun x val1 val2 -> Some (union_sign val1 val2)

@@ -7,7 +7,7 @@ open Ast
 let print_type = 
   List.iter (fun x -> print_string 
                 (match x with
-                 | Zero ->  "0 "
+                 | Zero -> "0 "
                  | Pos -> "+ " 
                  | Neg -> "- "
                  | _ -> "! "))
@@ -26,7 +26,6 @@ let union_sign sign1 sign2 =
 let intersection sign1 sign2 =
   List.filter (fun x -> List.mem x sign2) sign1
 
-(* (List.filter (fun x -> not(List.mem x sign2))  *)
 let reverse_sign sign_list = 
   List.filter (fun x -> not (List.mem x sign_list)) [Neg;Zero;Pos;Error] 
 
@@ -49,14 +48,24 @@ let sign_sub sign1 sign2 =
   then union_sign uni [Zero] else uni
 
 
+let sign_mudi sign1 sign2=
+  let uni = union_sign sign1 sign2 in
+  if (List.mem Zero sign2) then union_sign [Error] uni else
+  if (List.mem Pos sign1 && List.mem Neg sign1)
+  || (List.mem Pos sign2 && List.mem Neg sign2) 
+  || (List.mem Pos sign1 && List.mem Pos sign2) then uni else
+  if (List.mem Pos sign1 && List.mem Neg sign2)
+  ||(List.mem Pos sign2 && List.mem Neg sign1) then
+    List.filter ((<>) Pos) uni else uni
+
 let sign_mul sign1 sign2 =
-  match sign1 with
-  | [Error] -> [Error]
-  | [Zero] -> [Zero]
-  | _ -> (match sign2 with
-      | [Error] -> [Error]
-      | [Zero] -> [Zero]
-      | _ -> union_sign sign1 sign2)
+  if (sign1 = [Error] || sign2 = [Error]) then [Error]
+  else 
+    match sign1 with
+    | [Zero] -> if List.mem Error sign2 then [Zero;Error] else [Zero]
+    | _ -> (match sign2 with
+        | [Zero] -> if List.mem Error sign1 then [Zero;Error] else [Zero] 
+        |_ -> sign_mudi sign1 sign2)
 
 
 let sign_div sign1 sign2 =
@@ -64,18 +73,7 @@ let sign_div sign1 sign2 =
   else 
     match sign1 with
     | [Zero] -> if List.mem Error sign2 then [Zero;Error] else [Zero]
-    | _ -> let uni = union_sign sign1 sign2 in
-      if (List.mem Zero sign2) then union_sign [Error] uni else
-      if (List.mem Pos sign1 && List.mem Neg sign1)
-      || (List.mem Pos sign2 && List.mem Neg sign2) 
-      || (List.mem Pos sign1 && List.mem Pos sign2) then uni else
-      if (List.mem Pos sign1 && List.mem Neg sign2)
-      ||(List.mem Pos sign2 && List.mem Neg sign1) then
-        List.filter ((<>) Pos) uni else uni
-
-(* if (List.mem Zero sign2) then if sign2 = [Zero] then [Error] else union_sign [Error] sign1 else 
-   if sign1 = [Zero] then 
-   else union_sign sign1 sign2 *)
+    | _ -> sign_mudi sign1 sign2
 
 let sign_mod sign1 sign2 =
   match sign2 with 
@@ -101,26 +99,16 @@ and sign_expr env = function
 
 let greater_than equal sign_list =
   let all = [Neg;Zero;Pos;Error] in
-  (* List.map (fun x -> ) sign_list *)
-  let res = if List.mem Neg sign_list then 
-      (*intersection sign_list*) (if equal then all else reverse_sign [Neg])
-    else  if List.mem Zero sign_list then 
-      if equal || List.mem Neg sign_list then sign_list else
-        [Pos]
-    else sign_list
-  in (
-    (* print_string"see?";print_type res; *)
-    res)
-(* | [Neg] -> all
-   | [Zero] -> if equal then reverse_sign [Neg] else [Pos;Error]
-   | [Pos] -> [Pos;Error]
-   | x -> x *)
-
+  if List.mem Neg sign_list then 
+    (if equal then all else reverse_sign [Neg])
+  else  if List.mem Zero sign_list then 
+    if equal || List.mem Neg sign_list then sign_list else
+      [Pos]
+  else sign_list
 
 
 let inter_not_possible sign1 sign2 = 
   let inter = intersection sign1 sign2 in 
-  (* print_string "inter:"; print_type inter; *)
   inter = [Error] || inter = []
 
 let is_cond_possible cond env =
@@ -180,22 +168,22 @@ let rec sign_while env (c,b)=
 
 
 and sign_instr env = function
-    | Set (name, e) -> Env.add name (sign_expr env e)  env 
-    | Read name ->  let sign = [Neg;Zero;Pos] in
-      Env.add name sign env 
-    | Print e -> env
-    | If (c,b1,b2) -> let e1,comp,e2  = c in 
-      let cond_else = e1,reverse_comp comp,e2 in
-      let if_env = sign_block b1 env in 
-      let else_env = sign_block b2 env  in
-      (* print_string "OH NO\n"; *)
-      if not (is_cond_possible c env) then (print_string "if not possible\n";else_env)
-      else if not (is_cond_possible cond_else env) then (print_string "else not possible\n";if_env)
-      else let f = fun x val1 val2 -> Some (union_sign val1 val2)
-        in Env.union (f) if_env else_env
-    | While (c,b) -> sign_while env (c,b)
+  | Set (name, e) -> Env.add name (sign_expr env e)  env 
+  | Read name ->  let sign = [Neg;Zero;Pos] in
+    Env.add name sign env 
+  | Print e -> env
+  | If (c,b1,b2) -> let e1,comp,e2  = c in 
+    let cond_else = e1,reverse_comp comp,e2 in
+    let if_env = sign_block b1 env in 
+    let else_env = sign_block b2 env  in
+    (* print_string "OH NO\n"; *)
+    if not (is_cond_possible c env) then else_env
+    else if not (is_cond_possible cond_else env) then if_env
+    else let f = fun x val1 val2 -> Some (union_sign val1 val2)
+      in Env.union (f) if_env else_env
+  | While (c,b) -> sign_while env (c,b)
 
 and sign_block b env = 
-    match b with
-    | [] -> env
-    | (pos,instr)::xs -> let new_env = sign_instr env instr in sign_block xs new_env
+  match b with
+  | [] -> env
+  | (pos,instr)::xs -> let new_env = sign_instr env instr in sign_block xs new_env

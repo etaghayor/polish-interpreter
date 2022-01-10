@@ -1,0 +1,6 @@
+res := + + 0 4 * x + 3 5
+res := n
+res := - 0 n
+WHILE 7 > 5
+  PRINT 3
+PRINT x

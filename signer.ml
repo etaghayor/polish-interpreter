@@ -26,8 +26,11 @@ let union_sign sign1 sign2 =
 let intersection sign1 sign2 =
   List.filter (fun x -> List.mem x sign2) sign1
 
-let reverse_sign sign_list = 
+let comple_sign sign_list = 
   List.filter (fun x -> not (List.mem x sign_list)) [Neg;Zero;Pos;Error] 
+
+let reverse_sign = List.map (function Neg -> Pos | Pos -> Neg | s -> s)
+
 
 let reverse_comp = function
   | Eq -> Ne
@@ -37,16 +40,23 @@ let reverse_comp = function
   | Gt -> Le
   | Ge -> Lt
 
+let sign_add_single s1 s2 = 
+  match s1,s2 with
+  | Zero, _ -> [s2]
+  | _ , Zero -> [s1]
+  | Error, _ -> [Error]
+  | _, Error -> [Error]
+  | Pos, Pos -> [Pos]
+  | Neg,Neg -> [Neg]
+  | _, _ -> [Neg;Zero;Pos]
+
 let sign_add sign1 sign2 =
-  let uni = union_sign sign1 sign2 in
-  if(List.mem Pos uni && List.mem Neg uni) then union_sign uni [Zero] else uni
+  union_sign []
+    (List.flatten
+       (List.flatten (List.map (fun x ->
+            List.map (fun y -> sign_add_single x y) sign2) sign1)))
 
-
-let sign_sub sign1 sign2 =
-  let uni = union_sign sign1 sign2 in
-  if (List.mem Pos uni && List.mem Pos uni)|| (List.mem Neg uni && List.mem Neg uni) 
-  then union_sign uni [Zero] else uni
-
+let sign_sub sign1 sign2 = sign_add sign1 (reverse_sign sign2)
 
 let sign_mudi sign1 sign2=
   let uni = union_sign sign1 sign2 in
@@ -83,7 +93,7 @@ let sign_mod sign1 sign2 =
 let rec sign_op env ex1 ex2 op = 
   let sign1 = sign_expr env ex1 in let sign2 = sign_expr env ex2 in
   match op with
-  | Add -> sign_add sign1 sign2
+  | Add ->  sign_add sign1 sign2
   | Sub -> if ex1 = ex2 then
       if sign2 = [Error] then [Error] else Zero::(List.filter ((=) Error) sign2)
     else sign_sub sign1 sign2
@@ -100,7 +110,8 @@ and sign_expr env = function
 let greater_than equal sign_list =
   let all = [Neg;Zero;Pos;Error] in
   if List.mem Neg sign_list then 
-    (if equal then all else reverse_sign [Neg])
+    (if equal then all else comple_sign
+   [Neg])
   else  if List.mem Zero sign_list then 
     if equal || List.mem Neg sign_list then sign_list else
       [Pos]
@@ -133,7 +144,8 @@ let sign_cond cond env =
   let sign =
     (match comp with
      | Ne -> (match sign2 with
-         | [Zero] -> reverse_sign sign2
+         | [Zero] -> comple_sign
+         sign2
          | t -> t)
      | Lt -> (match sign2 with
          | [Neg;Zero] | [Zero] -> [Neg]
@@ -153,7 +165,7 @@ let sign_cond cond env =
          | t -> t)
      | _ -> sign2 )
   in match e1 with
-  | Var name -> Env.add name (union_sign sign sign1) env
+  | Var name -> Env.add name (intersection sign sign1) env
   | _ -> env
 
 let rec sign_while env (c,b)= 
@@ -174,8 +186,10 @@ and sign_instr env = function
   | Print e -> env
   | If (c,b1,b2) -> let e1,comp,e2  = c in 
     let cond_else = e1,reverse_comp comp,e2 in
-    let if_env = sign_block b1 env in 
-    let else_env = sign_block b2 env  in
+    let cond_env = sign_cond c env in
+    let else_cond_env = sign_cond cond_else env in
+    let if_env = sign_block b1 cond_env in 
+    let else_env = sign_block b2 else_cond_env  in
     if not (is_cond_possible c env) then else_env
     else if not (is_cond_possible cond_else env) then if_env
     else let f = fun x val1 val2 -> Some (union_sign val1 val2)

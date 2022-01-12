@@ -50,45 +50,46 @@ let sign_add_single s1 s2 =
   | Neg,Neg -> [Neg]
   | _, _ -> [Neg;Zero;Pos]
 
-let sign_add sign1 sign2 =
+let sign_mult_single s1 s2 =
+  match s1,s2 with
+  | Error, _ -> [Error]
+  | _, Error -> [Error]
+  | Zero, _ -> [Zero]
+  | _ , Zero -> [Zero]
+  | Pos, Neg -> [Neg]
+  | Neg,Pos -> [Neg]
+  | _, _ -> [Pos]
+
+let sign_div_single s1 s2 =
+  match s1,s2 with
+  | Error, _ -> [Error]
+  | _, Error -> [Error]
+  | Zero, _ -> [Zero]
+  | _ , Zero -> [Error]
+  | Pos, Neg -> [Neg]
+  | Neg,Pos -> [Neg]
+  | _, _ -> [Pos]
+
+let sign_mod_single s1 s2 =
+  match s1,s2 with
+  | Error, _ -> [Error]
+  | _, Error -> [Error]
+  | Zero, _ -> [Zero]
+  | _ , Zero -> [Error]
+  | _, _ -> [Pos]
+
+let sign_op_aux f sign1 sign2 =
   union_sign []
     (List.flatten
        (List.flatten (List.map (fun x ->
-            List.map (fun y -> sign_add_single x y) sign2) sign1)))
+            List.map (fun y -> f x y) sign2) sign1)))
 
+let sign_add = sign_op_aux sign_add_single 
 let sign_sub sign1 sign2 = sign_add sign1 (reverse_sign sign2)
+let sign_mul = sign_op_aux sign_mult_single 
+let sign_div = sign_op_aux sign_div_single 
+let sign_mod = sign_op_aux sign_mod_single 
 
-let sign_mudi sign1 sign2=
-  let uni = union_sign sign1 sign2 in
-  if (List.mem Zero sign2) then union_sign [Error] uni else
-  if (List.mem Pos sign1 && List.mem Neg sign1)
-  || (List.mem Pos sign2 && List.mem Neg sign2) 
-  || (List.mem Pos sign1 && List.mem Pos sign2) then uni else
-  if (List.mem Pos sign1 && List.mem Neg sign2)
-  ||(List.mem Pos sign2 && List.mem Neg sign1) then
-    List.filter ((<>) Pos) uni else uni
-
-let sign_mul sign1 sign2 =
-  if (sign1 = [Error] || sign2 = [Error]) then [Error]
-  else 
-    match sign1 with
-    | [Zero] -> if List.mem Error sign2 then [Zero;Error] else [Zero]
-    | _ -> (match sign2 with
-        | [Zero] -> if List.mem Error sign1 then [Zero;Error] else [Zero] 
-        |_ -> sign_mudi sign1 sign2)
-
-
-let sign_div sign1 sign2 =
-  if (sign1 = [Error] || sign2 = [Zero] || sign2 = [Error]) then [Error]
-  else 
-    match sign1 with
-    | [Zero] -> if List.mem Error sign2 then [Zero;Error] else [Zero]
-    | _ -> sign_mudi sign1 sign2
-
-let sign_mod sign1 sign2 =
-  match sign2 with 
-  | [Zero] -> [Error]
-  | _ -> [Zero; Pos]
 
 let rec sign_op env ex1 ex2 op = 
   let sign1 = sign_expr env ex1 in let sign2 = sign_expr env ex2 in
@@ -111,7 +112,7 @@ let greater_than equal sign_list =
   let all = [Neg;Zero;Pos;Error] in
   if List.mem Neg sign_list then 
     (if equal then all else comple_sign
-   [Neg])
+         [Neg])
   else  if List.mem Zero sign_list then 
     if equal || List.mem Neg sign_list then sign_list else
       [Pos]
@@ -145,7 +146,7 @@ let sign_cond cond env =
     (match comp with
      | Ne -> (match sign2 with
          | [Zero] -> comple_sign
-         sign2
+                       sign2
          | t -> t)
      | Lt -> (match sign2 with
          | [Neg;Zero] | [Zero] -> [Neg]
@@ -175,8 +176,8 @@ let rec sign_while env (c,b)=
     if env2 <> env then sign_while env2 (c,b)
     else let e1,comp,e2 = c in 
       let env_prop = sign_cond (e1,(reverse_comp comp),e2) env in
-      let f = fun x val1 val2 -> Some (intersection val1 val2) in
-      Env.union f env env_prop
+      let f = fun x val1 val2 -> Some (union_sign val1 val2) in
+      Env.union f env2 env_prop
 
 
 and sign_instr env = function

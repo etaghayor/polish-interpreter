@@ -12,6 +12,7 @@ let print_type =
                  | Neg -> "- "
                  | _ -> "! "))
 
+
 let compare s1 s2 =
   if s1 = s2 then 0 else
     match s1 with 
@@ -169,15 +170,20 @@ let sign_cond cond env =
   | Var name -> Env.add name (intersection sign sign1) env
   | _ -> env
 
+let union_env env1 env2 =
+  let f = fun x val1 val2 -> Some (union_sign val1 val2) in
+  Env.union f env1 env2
+
 let rec sign_while env (c,b)= 
   if not(is_cond_possible c env) then env else
     let env1 = sign_cond c env in
     let env2 = sign_block b env1 in
-    if env2 <> env then sign_while env2 (c,b)
+    if (not (Env.equal (=) env2 env))
+    then sign_while env2 (c,b)
     else let e1,comp,e2 = c in 
       let env_prop = sign_cond (e1,(reverse_comp comp),e2) env in
-      let f = fun x val1 val2 -> Some (union_sign val1 val2) in
-      Env.union f env2 env_prop
+      union_env env2 env_prop
+
 
 
 and sign_instr env = function
@@ -193,9 +199,8 @@ and sign_instr env = function
     let else_env = sign_block b2 else_cond_env  in
     if not (is_cond_possible c env) then else_env
     else if not (is_cond_possible cond_else env) then if_env
-    else let f = fun x val1 val2 -> Some (union_sign val1 val2)
-      in Env.union (f) if_env else_env
-  | While (c,b) -> sign_while env (c,b)
+    else union_env if_env else_env
+  | While (c,b) -> union_env env(sign_while env (c,b))
 
 and sign_block b env = 
   match b with

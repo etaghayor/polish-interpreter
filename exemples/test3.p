@@ -1,8 +1,5 @@
-COMMENT Algorithme de multiplication du paysan russe.
-READ m
-READ n
-res := 0
-WHILE n <> 0
-  IF % n 2 = 1
-    res := + res m
-PRINT res
+n := 1
+IF n > 0
+  n := -4
+ELSE
+  n := / 2 1

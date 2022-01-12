@@ -101,10 +101,12 @@ let rec read_instr lb lines =
     in Some (pos,depth,Print exp, tail)
   | "IF" ->
     let block1,rest = (read_block pos (depth+2) (tail)) 
-    in let p,depth,l = (fst_line_list depth rest) 
-    in let block2,rest2 = if List.length l > 0 && List.hd l = "ELSE" 
-         then (read_block p (depth+2) (List.tl rest)) else [],rest in Some
-      (pos,depth, If (read_cond pos (read_string (List.tl words_list)), block1 ,block2),rest2)
+    in if rest = [] then Some
+        (pos,depth, If (read_cond pos (read_string (List.tl words_list)), block1 ,[]),[]) else
+      let p,depth,l = (fst_line_list depth rest) 
+      in let block2,rest2 = if List.length l > 0 && List.hd l = "ELSE" 
+           then (read_block p (depth+2) (List.tl rest))else [],rest in Some
+        (pos,depth, If (read_cond pos (read_string (List.tl words_list)), block1 ,block2),rest2)
   | "WHILE" -> let block,rest = (read_block pos (depth+2) (tail)) in Some
       (pos,depth, While (read_cond pos (read_string (List.tl words_list)),block),rest)
   | "COMMENT" -> None
@@ -129,10 +131,12 @@ and read_block pos lb lines =
         else (List.rev res,l)
       else 
         let p,d,words_list =  fst_line_list lb ls in
-        if (List.hd words_list = "ELSE") then 
-          List.rev res, l
+        if (words_list = [] || List.hd words_list <> "ELSE")
+        then aux res lb (List.tl ls)
         else 
-          aux res lb (List.tl ls)
+          List.rev res, l
+          (* else 
+             aux res lb (List.tl ls) *)
   in aux [] lb lines
 
 
